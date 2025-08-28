@@ -1,5 +1,6 @@
 package com.example.fabrick_demo.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class TransactionsResponse {
@@ -26,7 +27,7 @@ public class TransactionsResponse {
         private String accountingDate;
         private String valueDate;
         private Type type;
-        private Double amount;
+        private BigDecimal amount;
         private String currency;
         private String description;
 
@@ -45,8 +46,13 @@ public class TransactionsResponse {
         public Type getType() { return type; }
         public void setType(Type type) { this.type = type; }
 
-        public Double getAmount() { return amount; }
-        public void setAmount(Double amount) { this.amount = amount; }
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public void setAmount(BigDecimal amount) {
+            this.amount = amount;
+        }
 
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }

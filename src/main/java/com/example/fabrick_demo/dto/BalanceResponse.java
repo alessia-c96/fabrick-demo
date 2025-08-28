@@ -1,5 +1,7 @@
 package com.example.fabrick_demo.dto;
 
+import java.math.BigDecimal;
+
 public class BalanceResponse {
 
     private String status;
@@ -13,18 +15,28 @@ public class BalanceResponse {
 
     public static class Payload {
         private String date;
-        private Double balance;
-        private Double availableBalance;
+        private BigDecimal balance;
+        private BigDecimal availableBalance;
         private String currency;
 
         public String getDate() { return date; }
         public void setDate(String date) { this.date = date; }
 
-        public Double getBalance() { return balance; }
-        public void setBalance(Double balance) { this.balance = balance; }
+        public BigDecimal getBalance() {
+            return balance;
+        }
 
-        public Double getAvailableBalance() { return availableBalance; }
-        public void setAvailableBalance(Double availableBalance) { this.availableBalance = availableBalance; }
+        public void setBalance(BigDecimal balance) {
+            this.balance = balance;
+        }
+
+        public BigDecimal getAvailableBalance() {
+            return availableBalance;
+        }
+
+        public void setAvailableBalance(BigDecimal availableBalance) {
+            this.availableBalance = availableBalance;
+        }
 
         public String getCurrency() { return currency; }
         public void setCurrency(String currency) { this.currency = currency; }

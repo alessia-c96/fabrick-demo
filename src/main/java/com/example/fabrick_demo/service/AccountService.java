@@ -7,6 +7,6 @@ import com.example.fabrick_demo.dto.TransactionsResponse;
 
 public interface AccountService {
     BalanceResponse getBalance(Long accountId);
-    TransactionsResponse getTransactions(Long accountId, String from, String to);
+    TransactionsResponse getTransactions(Long accountId, String fromAccountingDate, String toAccountingDate);
     MoneyTransferResponse createTransfer(Long accountId, MoneyTransferRequest moneyTransferRequest);
 }

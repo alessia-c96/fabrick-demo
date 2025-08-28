@@ -1,13 +1,30 @@
 package com.example.fabrick_demo.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PastOrPresent;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public class MoneyTransferRequest {
+    @NotNull
+    @Valid
     private Creditor creditor;
+    @NotBlank
     private String description;
+    @NotBlank
     private String currency;
+    @NotNull
+    @DecimalMin(value = "0.01")
     private BigDecimal amount;
-    private String executionDate; //YYYY-MM-DD
+    @NotNull
+    @PastOrPresent
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate executionDate;
 
     public Creditor getCreditor() {
         return creditor;
@@ -41,16 +58,18 @@ public class MoneyTransferRequest {
         this.amount = amount;
     }
 
-    public String getExecutionDate() {
+    public LocalDate getExecutionDate() {
         return executionDate;
     }
 
-    public void setExecutionDate(String executionDate) {
+    public void setExecutionDate(LocalDate executionDate) {
         this.executionDate = executionDate;
     }
 
     public static class Creditor {
+        @NotBlank
         private String name;
+        @NotNull @Valid
         private Account account;
 
         public String getName() {
@@ -71,6 +90,7 @@ public class MoneyTransferRequest {
     }
 
     public static class Account {
+        @NotBlank
         private String accountCode;
 
         public String getAccountCode() {

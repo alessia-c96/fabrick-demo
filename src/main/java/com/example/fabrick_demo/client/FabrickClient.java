@@ -20,8 +20,8 @@ public interface FabrickClient {
 
     @GetMapping("/v4.0/accounts/{accountId}/transactions")
     TransactionsResponse getTransactions(@PathVariable Long accountId,
-                                         @RequestParam String fromAccountingDate,
-                                         @RequestParam String toAccountingDate);
+                                         @RequestParam("fromAccountingDate") String fromAccountingDate,
+                                         @RequestParam("toAccountingDate") String toAccountingDate);
 
     @PostMapping("/v4.0/accounts/{accountId}/payments/money-transfers")
     MoneyTransferResponse createTransfer(@PathVariable Long accountId,

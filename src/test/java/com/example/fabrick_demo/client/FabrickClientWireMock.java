@@ -3,7 +3,6 @@ package com.example.fabrick_demo.client;
 import com.example.fabrick_demo.dto.MoneyTransferRequest;
 import com.example.fabrick_demo.dto.MoneyTransferResponse;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.ActiveProfiles;
@@ -25,7 +24,11 @@ import static org.assertj.core.api.Assertions.*;
 })
 public class FabrickClientWireMock {
 
-    @Autowired FabrickClient client;
+    private final FabrickClient client;
+
+    public FabrickClientWireMock(FabrickClient client) {
+        this.client = client;
+    }
 
     @Test
     void balance_ok() {

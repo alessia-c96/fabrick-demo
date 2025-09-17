@@ -6,7 +6,6 @@ import com.example.fabrick_demo.dto.MoneyTransferResponse;
 import com.example.fabrick_demo.dto.TransactionsResponse;
 import com.example.fabrick_demo.service.AccountService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +15,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/gbs/banking/v4.0")
 public class AccountController {
 
-    @Autowired
-    AccountService accountService;
+    private final AccountService accountService;
+
+    public AccountController(AccountService accountService) {
+        this.accountService = accountService;
+    }
 
     @GetMapping("/accounts/{accountId}/balance")
     public BalanceResponse getBalance(@PathVariable Long accountId) {

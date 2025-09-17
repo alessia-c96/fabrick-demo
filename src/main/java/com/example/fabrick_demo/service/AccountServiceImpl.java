@@ -5,13 +5,15 @@ import com.example.fabrick_demo.dto.BalanceResponse;
 import com.example.fabrick_demo.dto.MoneyTransferRequest;
 import com.example.fabrick_demo.dto.MoneyTransferResponse;
 import com.example.fabrick_demo.dto.TransactionsResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AccountServiceImpl implements AccountService {
-    @Autowired
-    FabrickClient client;
+    private final FabrickClient client;
+
+    public AccountServiceImpl(FabrickClient client) {
+        this.client = client;
+    }
 
     @Override public BalanceResponse getBalance(Long accountId) {
         return client.getBalance(accountId);

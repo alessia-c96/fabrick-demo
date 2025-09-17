@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.resolve(ex.status());
         if (status == null) status = HttpStatus.BAD_GATEWAY;
 
-        String body = ex.contentUTF8(); // Feign 13.x
+        String body = ex.contentUTF8();
         if (body == null || body.isBlank()) body = "{\"status\":\"KO\",\"errors\":[{\"description\":\"Upstream error\"}],\"payload\":{}}";
 
         MediaType ct = MediaType.APPLICATION_JSON;

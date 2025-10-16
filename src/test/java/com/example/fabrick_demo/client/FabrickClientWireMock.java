@@ -7,6 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,9 +25,9 @@ import static org.assertj.core.api.Assertions.*;
 })
 public class FabrickClientWireMock {
 
-    private final FabrickClient client;
+    private final FabrickReactiveClient client;
 
-    public FabrickClientWireMock(FabrickClient client) {
+    public FabrickClientWireMock(FabrickReactiveClient client) {
         this.client = client;
     }
 
@@ -37,13 +38,15 @@ public class FabrickClientWireMock {
                         .withStatus(200)
                         .withHeader("Content-Type","application/json")
                         .withBody("""
-          {
-            "status":"OK",
-            "payload":{"availableBalance":100.00,"currency":"EUR"}
-          }
-          """)));
+      {
+        "status":"OK",
+        "payload":{"availableBalance":100.00,"currency":"EUR"}
+      }
+      """)));
 
-        var r = client.getBalance(14537780L);
+        var r = client.getBalance(14537780L).block();
+
+        assertThat(r).isNotNull();
         assertThat(r.getStatus()).isEqualTo("OK");
         assertThat(r.getPayload().getAvailableBalance())
                 .isEqualByComparingTo("100.00");
@@ -58,13 +61,15 @@ public class FabrickClientWireMock {
                         .withStatus(200)
                         .withHeader("Content-Type","application/json")
                         .withBody("""
-          {
-            "status":"OK",
-            "payload":{"list":[]}
-          }
-          """)));
+      {
+        "status":"OK",
+        "payload":{"list":[]}
+      }
+      """)));
 
-        var r = client.getTransactions(14537780L, "2025-08-01", "2025-08-27");
+        var r = client.getTransactions(14537780L, "2025-08-01", "2025-08-27").block();
+
+        assertThat(r).isNotNull();
         assertThat(r.getStatus()).isEqualTo("OK");
         assertThat(r.getPayload().getList()).isEmpty();
     }
@@ -79,11 +84,11 @@ public class FabrickClientWireMock {
                         .withStatus(200)
                         .withHeader("Content-Type","application/json")
                         .withBody("""
-          {
-            "code":"OK",
-            "description":"Transfer accepted"
-          }
-          """)));
+      {
+        "code":"OK",
+        "description":"Transfer accepted"
+      }
+      """)));
 
         var req = new MoneyTransferRequest();
         var acc = new MoneyTransferRequest.Account(); acc.setAccountCode("IT23A0336844430152923804660");
@@ -94,8 +99,11 @@ public class FabrickClientWireMock {
         req.setAmount(new BigDecimal("800"));
         req.setExecutionDate(LocalDate.of(2025,8,27));
 
-        MoneyTransferResponse r = client.createTransfer(14537780L, req);
+        MoneyTransferResponse r = client.createTransfer(14537780L, req).block();
+
+        assertThat(r).isNotNull();
         assertThat(r.getCode()).isEqualTo("OK");
+        assertThat(r.getDescription()).isEqualTo("Transfer accepted");
     }
 
     @Test
@@ -105,13 +113,14 @@ public class FabrickClientWireMock {
                         .withStatus(400)
                         .withHeader("Content-Type","application/json")
                         .withBody("""
-          {
-            "status":"KO",
-            "errors":[{"code":"GEN001","description":"Errore generico"}]
-          }
-          """)));
+      {
+        "status":"KO",
+        "errors":[{"code":"GEN001","description":"Errore generico"}]
+      }
+      """)));
 
-        assertThatThrownBy(() -> client.getBalance(14537780L))
-                .isInstanceOf(feign.FeignException.BadRequest.class);
+        assertThatThrownBy(() -> client.getBalance(14537780L).block())
+                .isInstanceOf(RuntimeException.class)
+                .hasCauseInstanceOf(WebClientResponseException.BadRequest.class);
     }
 }

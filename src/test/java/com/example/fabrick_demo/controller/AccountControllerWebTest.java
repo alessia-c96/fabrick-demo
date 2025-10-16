@@ -18,6 +18,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -50,9 +51,10 @@ class AccountControllerWebTest {
         var payload = new BalanceResponse.Payload();
         payload.setCurrency("EUR");
         var resp = new BalanceResponse();
-        resp.setStatus("OK"); resp.setPayload(payload);
+        resp.setStatus("OK");
+        resp.setPayload(payload);
 
-        when(service.getBalance(14537780L)).thenReturn(resp);
+        when(service.getBalance(14537780L)).thenReturn(Mono.just(resp));
 
         mvc.perform(get("/api/gbs/banking/v4.0/accounts/{id}/balance", 14537780L))
                 .andExpect(status().isOk())
@@ -67,7 +69,9 @@ class AccountControllerWebTest {
     void transactions_ok() throws Exception {
         var tr = new TransactionsResponse();
         tr.setStatus("OK");
-        when(service.getTransactions(14537780L, "2025-08-01", "2025-08-27")).thenReturn(tr);
+
+        when(service.getTransactions(14537780L, "2025-08-01", "2025-08-27"))
+                .thenReturn(Mono.just(tr));
 
         mvc.perform(get("/api/gbs/banking/v4.0/accounts/{id}/transactions", 14537780L)
                         .param("fromAccountingDate", "2025-08-01")
@@ -88,7 +92,7 @@ class AccountControllerWebTest {
                 .andExpect(jsonPath("$.status").value("KO"))
                 .andExpect(jsonPath("$.errors[0].message").exists());
 
-        verifyNoInteractions(service); // la validazione fallisce prima del service
+        verifyNoInteractions(service);
     }
 
     @Test
@@ -109,7 +113,8 @@ class AccountControllerWebTest {
         resp.setCode("OK");
         resp.setDescription("Transfer accepted");
 
-        when(service.createTransfer(eq(14537780L), any(MoneyTransferRequest.class))).thenReturn(resp);
+        when(service.createTransfer(eq(14537780L), any(MoneyTransferRequest.class)))
+                .thenReturn(Mono.just(resp));
 
         mvc.perform(post("/api/gbs/banking/v4.0/accounts/{id}/payments/money-transfers", 14537780L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -133,7 +138,8 @@ class AccountControllerWebTest {
                 StandardCharsets.UTF_8, new RequestTemplate());
         var ex = new FeignException.BadRequest("bad", feignReq, upstream.getBytes(StandardCharsets.UTF_8), Map.of());
 
-        when(service.createTransfer(eq(14537780L), any(MoneyTransferRequest.class))).thenThrow(ex);
+        when(service.createTransfer(eq(14537780L), any(MoneyTransferRequest.class)))
+                .thenReturn(Mono.error(ex));
 
         var minimalBody = """
       {"creditor":{"name":"John","account":{"accountCode":"IT23A0336844430152923804660"}},"description":"x","currency":"EUR","amount":10,"executionDate":"2025-08-27"}

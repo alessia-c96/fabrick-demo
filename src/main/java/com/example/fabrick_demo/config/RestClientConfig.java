@@ -1,4 +1,4 @@
-package com.example.fabrick_demo.config;
+/*package com.example.fabrick_demo.config;
 
 import feign.RequestInterceptor;
 import feign.Retryer;
@@ -46,3 +46,4 @@ public class RestClientConfig {
         return new Retryer.Default(retryPeriod, retryMaxPeriod, retryMaxAttempts);
     }
 }
+*/

@@ -1,4 +1,4 @@
-package com.example.fabrick_demo.client;
+/*package com.example.fabrick_demo.client;
 
 import com.example.fabrick_demo.config.RestClientConfig;
 import com.example.fabrick_demo.dto.BalanceResponse;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public interface FabrickClient {
 
     @GetMapping("/v4.0/accounts/{accountId}/balance")
-    BalanceResponse getBalance(@PathVariable Long accountId);
+    BalanceResponse  getBalance(@PathVariable Long accountId);
 
     @GetMapping("/v4.0/accounts/{accountId}/transactions")
     TransactionsResponse getTransactions(@PathVariable Long accountId,
@@ -27,3 +27,4 @@ public interface FabrickClient {
     MoneyTransferResponse createTransfer(@PathVariable Long accountId,
                                          @RequestBody MoneyTransferRequest moneyTransferRequest);
 }
+*/

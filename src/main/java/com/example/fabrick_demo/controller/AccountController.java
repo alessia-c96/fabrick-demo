@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @Validated
 @RestController
@@ -22,12 +23,12 @@ public class AccountController {
     }
 
     @GetMapping("/accounts/{accountId}/balance")
-    public BalanceResponse getBalance(@PathVariable Long accountId) {
+    public Mono<BalanceResponse> getBalance(@PathVariable Long accountId) {
         return accountService.getBalance(accountId);
     }
 
     @GetMapping("/accounts/{accountId}/transactions")
-    public TransactionsResponse getTransactions(
+    public Mono<TransactionsResponse> getTransactions(
             @PathVariable Long accountId,
             @RequestParam("fromAccountingDate")
             @Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "Deve essere YYYY-MM-DD")
@@ -40,7 +41,7 @@ public class AccountController {
     }
 
     @PostMapping("/accounts/{accountId}/payments/money-transfers")
-    public MoneyTransferResponse createTransfer(
+    public Mono<MoneyTransferResponse> createTransfer(
             @PathVariable Long accountId,
             @Valid @RequestBody MoneyTransferRequest moneyTransferRequest
     ) {

@@ -1,6 +1,7 @@
 package com.example.fabrick_demo.service;
 
-import com.example.fabrick_demo.client.FabrickClient;
+//import com.example.fabrick_demo.client.FabrickClient;
+import com.example.fabrick_demo.client.FabrickReactiveClient;
 import com.example.fabrick_demo.dto.BalanceResponse;
 import com.example.fabrick_demo.dto.MoneyTransferRequest;
 import com.example.fabrick_demo.dto.MoneyTransferResponse;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -28,26 +30,27 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class AccountServiceImplTest {
     @Mock
-    FabrickClient client;
+    FabrickReactiveClient reactiveClient;
     @InjectMocks
     AccountServiceImpl service;
 
     @Test
     void getBalance_test() {
         long id = 14537780L;
+
         var payload = new BalanceResponse.Payload();
         payload.setCurrency("EUR");
         var expected = new BalanceResponse();
         expected.setStatus("OK");
         expected.setPayload(payload);
 
-        when(client.getBalance(id)).thenReturn(expected);
+        when(reactiveClient.getBalance(id)).thenReturn(Mono.just(expected));
 
-        var actual = service.getBalance(id);
+        var actual = service.getBalance(id).block();
 
         assertThat(actual).isSameAs(expected);
-        verify(client).getBalance(id);
-        verifyNoMoreInteractions(client);
+        verify(reactiveClient).getBalance(id);
+        verifyNoMoreInteractions(reactiveClient);
     }
 
     @Test
@@ -58,13 +61,13 @@ public class AccountServiceImplTest {
         var expected = new TransactionsResponse();
         expected.setStatus("OK");
 
-        when(client.getTransactions(id, from, to)).thenReturn(expected);
+        when(reactiveClient.getTransactions(id, from, to)).thenReturn(Mono.just(expected));
+        var actual = service.getTransactions(id, from, to).block();
 
-        var actual = service.getTransactions(id, from, to);
 
         assertThat(actual).isSameAs(expected);
-        verify(client).getTransactions(id, from, to);
-        verifyNoMoreInteractions(client);
+        verify(reactiveClient).getTransactions(id, from, to);
+        verifyNoMoreInteractions(reactiveClient);
     }
 
     @Test
@@ -87,35 +90,29 @@ public class AccountServiceImplTest {
         expected.setCode("OK");
         expected.setDescription("Transfer accepted");
 
-        when(client.createTransfer(id, req)).thenReturn(expected);
+        when(reactiveClient.createTransfer(id, req)).thenReturn(Mono.just(expected));
+        var actual = service.createTransfer(id, req).block();
 
-        var actual = service.createTransfer(id, req);
 
         assertThat(actual).isSameAs(expected);
-        verify(client).createTransfer(id, req);
-        verifyNoMoreInteractions(client);
+        verify(reactiveClient).createTransfer(id, req);
+        verifyNoMoreInteractions(reactiveClient);
     }
 
     @Test
     void getBalance_Exception() {
         long id = 14537780L;
-        String upstream = """
-            {"status":"KO","errors":[{"code":"GEN001","description":"Errore generico"}]}
-            """;
-        var feignReq = Request.create(
-                Request.HttpMethod.GET, "/",
-                Map.of("Accept", List.of("application/json")),
-                null, StandardCharsets.UTF_8, new RequestTemplate()
-        );
-        var ex = new FeignException.BadRequest("bad", feignReq, upstream.getBytes(StandardCharsets.UTF_8), Map.of());
 
-        when(client.getBalance(id)).thenThrow(ex);
+        var ex = new RuntimeException("Upstream error");
 
-        assertThatThrownBy(() -> service.getBalance(id))
-                .isInstanceOf(FeignException.BadRequest.class);
+        when(reactiveClient.getBalance(id)).thenReturn(Mono.error(ex));
 
-        verify(client).getBalance(id);
-        verifyNoMoreInteractions(client);
+        assertThatThrownBy(() -> service.getBalance(id).block())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Upstream error");
+
+        verify(reactiveClient).getBalance(id);
+        verifyNoMoreInteractions(reactiveClient);
     }
 
     @Test
@@ -124,24 +121,16 @@ public class AccountServiceImplTest {
         String from = "2019-01-01";
         String to   = "2019-12-01";
 
-        String upstream = """
-        {"status":"KO","errors":[{"code":"REQ017","description":"Invalid date format","params":""}],"payload":{}}
-        """;
+        var ex = new RuntimeException("Invalid date format");
 
-        var feignReq = Request.create(
-                Request.HttpMethod.GET, "/",
-                Map.of("Accept", List.of("application/json")),
-                null, StandardCharsets.UTF_8, new RequestTemplate()
-        );
-        var ex = new FeignException.BadRequest("bad", feignReq, upstream.getBytes(StandardCharsets.UTF_8), Map.of());
+        when(reactiveClient.getTransactions(id, from, to)).thenReturn(Mono.error(ex));
 
-        when(client.getTransactions(id, from, to)).thenThrow(ex);
+        assertThatThrownBy(() -> service.getTransactions(id, from, to).block())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Invalid date format");
 
-        assertThatThrownBy(() -> service.getTransactions(id, from, to))
-                .isInstanceOf(FeignException.BadRequest.class);
-
-        verify(client).getTransactions(id, from, to);
-        verifyNoMoreInteractions(client);
+        verify(reactiveClient).getTransactions(id, from, to);
+        verifyNoMoreInteractions(reactiveClient);
     }
 
     @Test
@@ -160,25 +149,17 @@ public class AccountServiceImplTest {
         req.setAmount(new BigDecimal("10"));
         req.setExecutionDate(LocalDate.now().plusDays(1));
 
-        String upstream = """
-        {"status":"KO","errors":[{"code":"SCT008","description":"La data ordine non puo' essere successiva alla data corrente","params":""}],"payload":{}}
-        """;
+        var ex = new RuntimeException("La data ordine non puo' essere successiva alla data corrente");
 
-        var feignReq = Request.create(
-                Request.HttpMethod.POST, "/",
-                Map.of("Content-Type", List.of("application/json")),
-                upstream.getBytes(StandardCharsets.UTF_8),
-                StandardCharsets.UTF_8, new RequestTemplate()
-        );
-        var ex = new FeignException.BadRequest("bad", feignReq, upstream.getBytes(StandardCharsets.UTF_8), Map.of());
+        when(reactiveClient.createTransfer(eq(id), any(MoneyTransferRequest.class)))
+                .thenReturn(Mono.error(ex));
 
-        when(client.createTransfer(eq(id), any(MoneyTransferRequest.class))).thenThrow(ex);
+        assertThatThrownBy(() -> service.createTransfer(id, req).block())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("La data ordine non puo' essere successiva alla data corrente");
 
-        assertThatThrownBy(() -> service.createTransfer(id, req))
-                .isInstanceOf(FeignException.BadRequest.class);
-
-        verify(client).createTransfer(eq(id), any(MoneyTransferRequest.class));
-        verifyNoMoreInteractions(client);
+        verify(reactiveClient).createTransfer(eq(id), any(MoneyTransferRequest.class));
+        verifyNoMoreInteractions(reactiveClient);
     }
 
 }
